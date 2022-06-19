@@ -1,0 +1,262 @@
+---
+title: "USA Gun violence compared to GDP per state"
+author: "Petar Randjelovic"
+date: "`r Sys.Date()`"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+    toc: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Introduction
+
+## Abstract
+
+Gun violence in the United States results in tens of thousands of deaths and injuries annually, and were the leading cause of death for children 19 and younger in 2020. In 2018, the most recent year for which data are available as of 2021, the Centers for Disease Control and Prevention's (CDC) National Center for Health Statistics reports 38,390 deaths by firearm, of which 24,432 were by suicide. 
+
+<span style="color: #159957;">The rate of firearm deaths per 100,000 people rose from 10.3 per 100,000 in 1999 to 12 per 100,000 in 2017, with 109 people dying per day or about **14,542** homicides in total.</span>
+
+In **2010**, 358 murders were reported involving a rifle while **6,009** were reported involving a handgun; another 1,939 were reported with an unspecified type of firearm and in **2011**, a total of **478,400** fatal and nonfatal violent crimes were committed with a firearm.
+
+<hr>
+
+While the causes of these crimes and incidents vary, we might be able to look at one of the factors leading to this kind of activity. Gun violence is more common in poor areas inhabited by lower-working class of citizens. Also, areas where gun laws are more strict, tend to have more gun crime. There are tons of factors that contribute to the explanation and prediction of gun incidents but in this paper, we will look at only one, which is the *income per area* (GDP per Capita by Area/State) and *gun violence per area* in relation.
+
+![](https://api.time.com/wp-content/uploads/2019/09/american-flag-wind.jpg)
+
+<p style=""> About 1.4 million people have died from firearms in the U.S. between 1968 and 2011. </p>
+
+<hr>
+
+## Presentation and description of the problem
+
+In this paper we will try to look for relevance between income and GDP per capita, per **state** and the amount of gun crimes in the same states/areas.
+
+**Is GDP relevant at all?**
+
+Many sources indicate that gun violence is strictly connected to income of the population in the area. Richer areas have much lower gun violence rates then poor areas (usually populated by minorities). Although it is one factor, its relevance is not nearly enough as the equation requires much more factors and criteria to make a 
+
+In the following section we will look at the data we have and try to find resemblance and **relevance** between gun crime and GDP per capita per area.
+
+## Presentation of the Data
+
+The data used will be available for download and overview in the [References](#references) under bullets **[1.]** and **[2.]**
+
+If we take a look at our first dataset, depicting top 10 US states by GDP per capita  2015, 2016 and 2017 we will see **Washington D.C.**, **Massachusetts** and **New York State** at the top over  The dataframes can be sorted by GDP per capita descending and ascending for each year.
+
+<hr>
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(DT)
+
+dfGdp <- read_csv('gdp.csv')
+
+datatable(dfGdp %>%
+            group_by(Area, `2015`, `2016`, `2017`) %>%
+            summarise(MeanGDP = round(mean(c(`2015`, `2016`, `2017`)), digits = 2)) %>%
+            group_by(Area) %>%
+            slice_max(MeanGDP, n = 1), class = 'cell-border stripe')
+```
+<hr> 
+
+Another attribute present here is the mean GDP (in US Dollars) per capita overtime for **2015, 2016** and **2017**
+
+*The data table is interactive, please make sure to use* **sorting** *buttons on top of the colums.*
+
+The other dataset we will be working with is the **Gun Violence Incidents**, presented below are top **10** states with highest gun violence crimes in the United States.
+
+<hr>
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(DT)
+
+dfGun <- read_csv('all_guns.csv')
+
+datatable(dfGun %>%
+            group_by(state) %>%
+            summarise(incidents = sum(n_injured, n_killed)) %>%
+            slice_max(incidents, n = 10), class = 'cell-border stripe')
+```
+<hr>
+
+The thesis so far shows only one overlapping with top 10 highest by GDP per capita and top 10 states with most gun crimes (New York State).
+
+Even though New York State (especially New York City) has a high income per capita, the population of this state is incredibly higher then others in top 10 by GDP per capita therefore making it almost inevitable to include high crime rate.
+
+# Exploratory Data Analysis
+
+The purpose of Data Analysis is to extract useful <span style="color:blue;">information</span> from data and <span style="color:blue;">taking the decision</span> based upon the data analysis.
+
+**Exploratory data analysis** is an approach of analyzing data sets to summarize their main characteristics, often using statistical graphics and other data visualization methods.
+
+We will take one example now and compare overall GDP growth with gun crime reports overtime. The timespan that we will be looking into is from *2013* until *2017* for GDP and from *2013* until *2022* for Gun Crime, specifically for **Top 10 states by Gun Crime**, which is a state with highest gun crime rates.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(ggplot2)
+library(patchwork)
+library(dplyr)
+library(tidyr)
+
+
+
+dfGdpTop10 <- subset(dfGdp, dfGdp$Area=="Illinois" | dfGdp$Area=="California" | dfGdp$Area=="Texas" | dfGdp$Area=="Florida" | dfGdp$Area=="Pennsylvania" | dfGdp$Area=="Ohio" | dfGdp$Area=="New York" | dfGdp$Area=="Louisiana" | dfGdp$Area=="North Carolina" | dfGdp$Area=="Georgia")
+
+
+dfGun <- mutate(dfGun, incidents = n_killed + n_injured)
+
+dfGunTop10 <- subset(dfGun, dfGun$state=="Illinois" | dfGun$state=="California" | dfGun$state=="Texas" | dfGun$state=="Florida" | dfGun$state=="Pennsylvania" | dfGun$state=="Ohio" | dfGun$state=="New York" | dfGun$state=="Louisiana" | dfGun$state=="North Carolina" | dfGun$state=="Georgia")
+
+plotGun <- ggplot(dfGunTop10) + geom_smooth(aes(date, incidents))
+
+plotGdp2013 <- ggplot(dfGdpTop10) + geom_bar(aes(x=Area, y=`2013`), stat="identity", fill="#f68060", alpha=.6, width=.4 ) +  
+    coord_flip() +
+    xlab("") +
+    theme_bw() +
+    theme(
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plotGdp2015 <- ggplot(dfGdpTop10) + geom_bar(aes(x=Area, y=`2015`), stat="identity", fill="#f68060", alpha=.6, width=.4 ) +  
+    coord_flip() +
+    xlab("") +
+    theme_bw() +
+    theme(
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+plotGdp2017 <- ggplot(dfGdpTop10) + geom_bar(aes(x=Area, y=`2017`), stat="identity", fill="#f68060", alpha=.6, width=.4 ) +  
+    coord_flip() +
+    xlab("") +
+    theme_bw() +
+    theme(
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
+
+(plotGdp2013 | plotGdp2015 | plotGdp2017) / 
+      plotGun
+
+```
+As seen from the data presented, less GDP per capita in area usually indicates more gun violence. But even though GDP is growing throughout the years, these areas are becoming more and more affected in recent years for other different factors.
+
+
+## Visualization of the Data
+
+Visualizing this data might help us realize exactly how bad the problem is based on the most problematic areas and states.
+
+Below we have a map of highest earning states per capita (states with highest GDP per capita) in color green. We will compare this map to the map of states with highest gun violence crimes and compare.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+library(usmap)
+library(ggplot2)
+library(patchwork)
+
+dfGdpTop10 <- dfGdp %>%
+            group_by(Area) %>%
+            summarise(MeanGDP = round(mean(c(`2013`, `2014`, `2015`, `2016`, `2017`)))) %>%
+            slice_max(MeanGDP, n = 10)
+dfGdpTop10
+
+usMapGDP <- plot_usmap(regions = "states", include = dfGdpTop10$Area, labels = TRUE) + 
+  labs(title = "U.S. States",
+       subtitle = "Top 10 states with highest GDP per Capita.") + 
+  theme(panel.background = element_rect(color = "blue"))
+usMapGDP
+
+
+```
+
+Below is the map of states with highest gun violence crimes from **2013** to **2022**.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+dfGunTop10 <- dfGun %>%
+            group_by(state) %>%
+            summarise(incidents = sum(n_injured, n_killed)) %>%
+            slice_max(incidents, n = 10)
+
+library(usmap)
+library(ggplot2)
+library(patchwork)
+
+usMapGuns <- plot_usmap(regions = "states", include = dfGunTop10$state, labels = TRUE) + 
+  labs(title = "U.S. States",
+       subtitle = "Top 10 states with highest Gun Violence.") + 
+  theme(panel.background = element_rect(color = "red"))
+usMapGuns
+
+```
+
+### States with Top Gun Crimes overall:
+
+**Illinois**
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+dfGun %>% 
+  subset(dfGun$state=="Illinois") %>%
+  ggplot(aes(x=date, y=incidents, colour=state)) + geom_point(shape = 21, colour="red", fill = "red", size = 0.9, stroke = 1.1
+
+)
+
+```
+
+**California**
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+
+dfGun %>% 
+  subset(dfGun$state=="California") %>%
+  ggplot(aes(x=date, y=incidents, colour=state)) + geom_point(shape = 21, colour="green", fill = "green", size = 0.9, stroke = 1.1
+
+)
+
+```
+
+**Texas**
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+dfGun %>% 
+  subset(dfGun$state=="Texas") %>%
+  ggplot(aes(x=date, y=incidents, colour=state)) + geom_point(shape = 21, colour="blue", fill = "blue", size = 0.9, stroke = 1.1
+
+)
+
+```
+
+# Conclusion
+
+GDP per capita surely is one of the factors for predicting areas that have a likelihood of gun crime and violence. Although only one of the factor, the data clearly indicated that there is a resemblance and that there is a link between the two. The only area colliding in these two maps is **New York State**, mainly because **New York City** is located in it. This topic is not withing our domain, but there is a certain culture withing the **NYC** regarding its history with mafia, gang violence and overpopulation which may be indicating factors leading to higher gun violence.
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+(usMapGDP | usMapGuns)
+```
+
+## Interpretation
+
+Even though its only one of the factors, in this paper we were clearly able to visualize and present the data needed to show one of indicators of gun violence. Perhaps HDI and Happiness index affect it as well? As these were out of our domain, we can only say that the factor researched and analyzed (GDP per capita per state) is one of the factors leading to causes of gun violence throughout the United States.
+
+## What knowledge was extracted?
+
+Knowledge extracted from this reasearch is, as stated above, GDP affects how people act. Violence is less common in areas where life is better and where people earn more. To get the real reason behind gun violence we would need to research many more factors, but what we gathered after this research paper is that GDP per capita affects how people act not only to people around them, but also causing less problems overall.
+
+# References
+
+[1. GDP per capita in US states - Dataset](https://www.kaggle.com/datasets/solorzano/gdp-per-capita-in-us-states)
+
+[2. Gun Violence Incidents in the United States - Dataset](https://www.kaggle.com/datasets/emmanuelfwerr/gun-violence-incidents-in-the-usa)
+
+[3. Gun Violence Archive](https://www.gunviolencearchive.org/)
+
+[4. Gun Violence WikiPage](https://en.wikipedia.org/wiki/Gun_violence_in_the_United_States)
+
+[5. Gun Violence in America - James A. Densley & Jillian K. Peterson](https://www.researchgate.net/publication/320411328_Gun_Violence_in_America)
+
+<hr>
+
+[`r icons::fontawesome("github")` Github repository](https://github.com/PetarRan/gun-violence-USA)
+
