@@ -9,4 +9,6 @@ To download the datasets used, API commands are provided:
 
 <hr>
 
-Live Demo: `coming soon`
+Live Demo: [Click Here!](https://comfy-cat-d0b1af.netlify.app/)
+
+[![Netlify Status](https://api.netlify.com/api/v1/badges/862ee18a-a76b-478e-9fda-bd54424dfaee/deploy-status)](https://app.netlify.com/sites/comfy-cat-d0b1af/deploys)
